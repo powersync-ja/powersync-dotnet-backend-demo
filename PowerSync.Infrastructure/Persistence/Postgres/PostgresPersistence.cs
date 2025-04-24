@@ -148,7 +148,7 @@ namespace PowerSync.Infrastructure.Persistence.Postgres
             };
 
             var jsonData = JsonSerializer.Serialize(dataDict);
-            
+
             // Use json_populate_record to convert JSON to a record of the target table type
             // Then perform an UPSERT (INSERT with ON CONFLICT DO UPDATE)
             var sql = $@"
@@ -200,10 +200,13 @@ namespace PowerSync.Infrastructure.Persistence.Postgres
                 dataWithId["id"] = op.Id;
             }
 
+            // Generate column definitions for jsonb_to_record
+            var columnDefs = string.Join(", ", dataWithId.Select(kvp => $"{kvp.Key} text")); 
+
             // Update only specified columns using a CTE with json_populate_record
             var statement = $@"
                 WITH data_row AS (
-                    SELECT (json_populate_record(null::{op.Table}, @data::json)).*
+                    SELECT * FROM jsonb_to_record(@data::jsonb) AS data_row({columnDefs})
                 )
                 UPDATE {op.Table}
                 SET {string.Join(", ", updateClauses)}
@@ -252,7 +255,7 @@ namespace PowerSync.Infrastructure.Persistence.Postgres
         public async Task<long> CreateCheckpointAsync(string userId, string clientId)
         {
             await using var connection = await _dataSource.OpenConnectionAsync();
-            
+
             // Insert new checkpoint or increment existing one using ON CONFLICT
             await using var cmd = new NpgsqlCommand(@"
             INSERT INTO checkpoints(user_id, client_id, checkpoint)
