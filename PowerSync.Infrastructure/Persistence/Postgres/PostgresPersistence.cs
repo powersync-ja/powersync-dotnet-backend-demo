@@ -201,14 +201,26 @@ namespace PowerSync.Infrastructure.Persistence.Postgres
             }
 
             // Generate column definitions for jsonb_to_record
+            var columnDefs = string.Join(", ", dataWithId.Select(kvp => $"{kvp.Key} text")); 
+
+            // Update only specified columns using a CTE with json_populate_record
             var statement = $@"
                 WITH data_row AS (
-                    SELECT (json_populate_record(null::{op.Table}, @data::json)).*
+                    SELECT * FROM jsonb_to_record(@data::jsonb) AS data_row({columnDefs})
                 )
                 UPDATE {op.Table}
                 SET {string.Join(", ", updateClauses)}
                 FROM data_row
                 WHERE {op.Table}.id = data_row.id";
+
+            // var statement = $@"
+            //     WITH data_row AS (
+            //         SELECT (json_populate_record(null::{op.Table}, @data::json)).*
+            //     )
+            //     UPDATE {op.Table}
+            //     SET {string.Join(", ", updateClauses)}
+            //     FROM data_row
+            //     WHERE {op.Table}.id = data_row.id";
 
             await using var cmd = new NpgsqlCommand(statement, connection);
             cmd.Parameters.AddWithValue("@data", JsonSerializer.Serialize(dataWithId));
