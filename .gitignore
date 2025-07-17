@@ -1,35 +1,70 @@
-# Environment and configuration files
-.env
-appSettings.json
-appSettings.*.json
-
-# Build and runtime files
+# Build directories
 bin/
 obj/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+*.userprefs
+*.rsuser
+
+# Logs and debug output
+*.log
+*.tlog
+*.dmp
+*.tmp
+
+# Visual Studio specific
+.vscode/
+.vs/
+
+# Rider specific
+.idea/
+*.sln.iml
+
+# Build results
 *.dll
 *.exe
 *.pdb
-*.so
-*.dylib
-*.pyc
-*.class
+*.cache
+*.ilk
+*.lib
+*.obj
+*.sbr
+*.swp
+*.sln.ide
+*.tlog
+*.lastbuildstate
+*.idb
 
-# Logs
-*.log
-logs/
+.DS_STORE
 
-# User-specific settings
-.idea/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
 
-# Dependencies
-node_modules/
+# NuGet packages
+*.nupkg
+*.snupkg
 packages/
-wwwroot/lib/
+.nuget/
 
-# System files
-.DS_Store
-Thumbs.db
+# Others
+TestResults/
+*.VSIXProjectLaunch
+.project
+.vsconfig
+
+*.db
+*.db-shm
+*.db-wal
+
+#Core binaries - add rules after ps extension downloading is supported
+*.dylib
+*.dll
+*.so
+*.xcframework
+.env
+*NativeLibs
+
+# Ignore user id file
+user_id.txt
