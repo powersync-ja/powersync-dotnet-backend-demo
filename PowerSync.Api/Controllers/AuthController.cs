@@ -42,15 +42,33 @@ namespace PowerSync.Api.Controllers
         /// Ensures RSA key pairs exist, generating them if necessary.
         /// Keys are generated once and stored statically to be reused across requests.
         /// </summary>
-        private static void EnsureKeys()
+        private void EnsureKeys()
         {
             // Skip generation if keys already exist
             if (_rsaPrivate != null && _rsaPublic != null && _kid != null)
                 return;
 
-            // Generate new RSA key pair and key identifier
-            var (privateKeyBase64, publicKeyBase64, keyId) = KeyPairGenerator.GenerateKeyPair();
+            string privateKeyBase64;
+            string publicKeyBase64;
+            string keyId;
+            // Use configured keys if available
+            if (!string.IsNullOrWhiteSpace(_config.PrivateKey) && !string.IsNullOrWhiteSpace(_config.PublicKey))
+            {
+                privateKeyBase64 = _config.PrivateKey;
+                publicKeyBase64 = _config.PublicKey;
+                // Generate consistent kid based on public key hash
+                using var sha256 = SHA256.Create();
+                var keyHash = sha256.ComputeHash(Convert.FromBase64String(publicKeyBase64));
+                keyId = $"powersync-configured-{Convert.ToHexString(keyHash)[..16].ToLowerInvariant()}";
+                _logger.LogInformation("Using configured RSA keys with kid: {KeyId}", keyId);
+            }
+            else
+            {
+                // Generate new RSA key pair and key identifier
+                (privateKeyBase64, publicKeyBase64, keyId) = KeyPairGenerator.GenerateKeyPair();
             
+                _logger.LogWarning("No configured keys found. Generated new RSA key pair. Consider setting POWERSYNC_PRIVATE_KEY and POWERSYNC_PUBLIC_KEY environment variables for production.");
+            }
             // Initialize private key
             _rsaPrivate = RSA.Create();
             _rsaPrivate.ImportRSAPrivateKey(Convert.FromBase64String(privateKeyBase64), out _);
@@ -90,7 +108,7 @@ namespace PowerSync.Api.Controllers
             {
                 { "sub", user_id },                                   // Subject (user ID)
                 { "iat", now.ToUnixTimeSeconds() },                   // Issued at timestamp
-                { "exp", now.AddHours(12).ToUnixTimeSeconds() },      // Expiration (12 hours)
+                { "exp", now.AddMinutes(5).ToUnixTimeSeconds() },     // Expiration (5 minutes)
                 { "aud", powerSyncInstanceUrl },                      // Audience (PowerSync URL)
                 { "iss", _config.JwtIssuer! }                         // Issuer
             };
@@ -127,15 +145,16 @@ namespace PowerSync.Api.Controllers
 
             // Export public key parameters
             var rsaParams = _rsaPublic.ExportParameters(false);
-            
+
             // Format as JWK (JSON Web Key)
             var jwk = new
             {
                 kty = "RSA",                                    // Key type
                 alg = "RS256",                                  // Algorithm
+                use = "sig",                                    // Signature operations
                 kid = _kid,                                     // Key ID
-                n = Base64UrlEncode(rsaParams.Modulus!),       // Modulus
-                e = Base64UrlEncode(rsaParams.Exponent!)       // Exponent
+                n = Base64UrlEncode(rsaParams.Modulus!),        // Modulus
+                e = Base64UrlEncode(rsaParams.Exponent!)        // Exponent
             };
 
             // Return JWK set (array of keys)
