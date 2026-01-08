@@ -34,7 +34,7 @@ namespace PowerSync.Infrastructure.Configuration
             // if (!string.IsNullOrWhiteSpace(PowerSyncUrl) && !Uri.TryCreate(PowerSyncUrl, UriKind.Absolute, out _))
             //     validationErrors.Add("Invalid PowerSync URL format");
 
-            var supportedDatabaseTypes = new[] { "postgres", "mysql", "mongodb" };
+            var supportedDatabaseTypes = new[] { "postgres", "mssql" };
             if (!string.IsNullOrWhiteSpace(DatabaseType) && 
                 !supportedDatabaseTypes.Contains(DatabaseType.ToLowerInvariant()))
                 validationErrors.Add($"Unsupported database type. Supported types are: {string.Join(", ", supportedDatabaseTypes)}");

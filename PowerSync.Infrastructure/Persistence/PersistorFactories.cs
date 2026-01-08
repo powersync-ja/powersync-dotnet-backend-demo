@@ -1,4 +1,5 @@
 using PowerSync.Domain.Interfaces;
+using PowerSync.Infrastructure.Persistence.MSSQL;
 using PowerSync.Infrastructure.Persistence.Postgres;
 
 namespace PowerSync.Infrastructure.Persistence
@@ -16,7 +17,10 @@ namespace PowerSync.Infrastructure.Persistence
             {
                 { "mongodb", new MongoPersisterFactory() },
                 { "postgres", new PostgresPersisterFactory() },
-                { "mysql", new MySqlPersisterFactory() }
+                { "postgresql", new PostgresPersisterFactory() },
+                { "mysql", new MySqlPersisterFactory() },
+                { "mssql", new MSSQLPersisterFactory() },
+                { "sqlserver", new MSSQLPersisterFactory() }
             };
         }
 
@@ -63,6 +67,17 @@ namespace PowerSync.Infrastructure.Persistence
         {
             // Implement MySQL persister creation
             throw new NotImplementedException();
+        }
+    }
+
+    public class MSSQLPersisterFactory : IPersisterFactory
+    {
+        public IPersister CreatePersisterAsync(string uri)
+        {
+            var persister = new MSSQLPersistence(uri);
+
+            // Return the created persister
+            return persister;
         }
     }
 }
