@@ -43,41 +43,21 @@ namespace PowerSync.Infrastructure.Persistence
 
     public class MongoPersisterFactory : IPersisterFactory
     {
-        public IPersister CreatePersisterAsync(string uri)
-        {
-            // Implement MongoDB persister creation
-            throw new NotImplementedException();
-        }
+        public IPersister CreatePersisterAsync(string uri) => throw new NotImplementedException();
     }
 
     public class PostgresPersisterFactory : IPersisterFactory
     {
-        public IPersister CreatePersisterAsync(string uri)
-        {
-            var persister = new PostgresPersister(uri);
-
-            // Return the created persister
-            return persister;
-        }
+        public IPersister CreatePersisterAsync(string uri) => new PostgresPersister(uri);
     }
 
     public class MySqlPersisterFactory : IPersisterFactory
     {
-        public IPersister CreatePersisterAsync(string uri)
-        {
-            // Implement MySQL persister creation
-            throw new NotImplementedException();
-        }
+        public IPersister CreatePersisterAsync(string uri) => throw new NotImplementedException();
     }
 
     public class MSSQLPersisterFactory : IPersisterFactory
     {
-        public IPersister CreatePersisterAsync(string uri)
-        {
-            var persister = new MSSQLPersistence(uri);
-
-            // Return the created persister
-            return persister;
-        }
+        public IPersister CreatePersisterAsync(string uri) => new MSSQLPersistence(uri);
     }
 }
