@@ -302,24 +302,36 @@ namespace PowerSync.Infrastructure.Persistence.MySQL
         {
             await using var connection = new MySqlConnection(_connectionString);
             await connection.OpenAsync();
+            await using var transaction = await connection.BeginTransactionAsync();
 
-            var statement = @"
-                INSERT INTO checkpoints (user_id, client_id, checkpoint)
-                VALUES (@user_id, @client_id, 1)
-                ON DUPLICATE KEY UPDATE checkpoint = checkpoint + 1";
+            try
+            {
+                var statement = @"
+                    INSERT INTO checkpoints (user_id, client_id, checkpoint)
+                    VALUES (@user_id, @client_id, 1)
+                    ON DUPLICATE KEY UPDATE checkpoint = checkpoint + 1";
 
-            await using var cmd = new MySqlCommand(statement, connection);
-            cmd.Parameters.AddWithValue("@user_id", userId);
-            cmd.Parameters.AddWithValue("@client_id", clientId);
-            await cmd.ExecuteNonQueryAsync();
+                await using var cmd = new MySqlCommand(statement, connection, transaction);
+                cmd.Parameters.AddWithValue("@user_id", userId);
+                cmd.Parameters.AddWithValue("@client_id", clientId);
+                await cmd.ExecuteNonQueryAsync();
 
-            var selectStatement = "SELECT checkpoint FROM checkpoints WHERE user_id = @user_id AND client_id = @client_id";
-            await using var selectCmd = new MySqlCommand(selectStatement, connection);
-            selectCmd.Parameters.AddWithValue("@user_id", userId);
-            selectCmd.Parameters.AddWithValue("@client_id", clientId);
+                var selectStatement = "SELECT checkpoint FROM checkpoints WHERE user_id = @user_id AND client_id = @client_id";
+                await using var selectCmd = new MySqlCommand(selectStatement, connection, transaction);
+                selectCmd.Parameters.AddWithValue("@user_id", userId);
+                selectCmd.Parameters.AddWithValue("@client_id", clientId);
 
-            var result = await selectCmd.ExecuteScalarAsync();
-            return Convert.ToInt64(result);
+                var result = await selectCmd.ExecuteScalarAsync();
+                await transaction.CommitAsync();
+
+                return Convert.ToInt64(result);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                Console.WriteLine($"Error creating checkpoint: {ex.Message}");
+                throw;
+            }
         }
     }
 }
