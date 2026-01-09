@@ -29,12 +29,13 @@ namespace PowerSync.Infrastructure.Persistence
         /// <summary>
         /// Gets a persister factory for a specific database type.
         /// </summary>
-        /// <param name="type">The database type</param>
+        /// <param name="type">The database type (case-insensitive)</param>
         /// <returns>The corresponding persister factory</returns>
         /// <exception cref="ArgumentException">Thrown when an unsupported database type is provided</exception>
         public IPersisterFactory GetFactory(string type)
         {
-            if (_factories.TryGetValue(type, out var factory))
+            var normalizedType = type.ToLowerInvariant();
+            if (_factories.TryGetValue(normalizedType, out var factory))
             {
                 return factory;
             }

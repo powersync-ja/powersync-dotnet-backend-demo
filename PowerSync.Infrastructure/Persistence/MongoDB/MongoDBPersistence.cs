@@ -130,14 +130,22 @@ namespace PowerSync.Infrastructure.Persistence.MongoDB
 
         /// <summary>
         /// Extracts a string value from a dictionary, handling JsonElement values.
+        /// Treats null values as if the key doesn't exist.
         /// </summary>
         private static string? GetStringValue(Dictionary<string, object>? data, string key)
         {
             if (data == null || !data.TryGetValue(key, out var value))
                 return null;
 
+            // Treat null values (including JsonElement with Null kind) as missing
+            if (value == null)
+                return null;
+
             if (value is JsonElement jsonElement)
             {
+                if (jsonElement.ValueKind == JsonValueKind.Null)
+                    return null;
+                
                 return jsonElement.ValueKind == JsonValueKind.String 
                     ? jsonElement.GetString() 
                     : jsonElement.GetRawText();
@@ -266,6 +274,9 @@ namespace PowerSync.Infrastructure.Persistence.MongoDB
             };
 
             var result = await collection.FindOneAndUpdateAsync(filter, update, options);
+            if (result == null)
+                throw new InvalidOperationException("Failed to create or retrieve checkpoint: FindOneAndUpdateAsync returned null");
+            
             return result["checkpoint"].AsInt64;
         }
     }

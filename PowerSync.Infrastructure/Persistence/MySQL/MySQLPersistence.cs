@@ -140,11 +140,20 @@ namespace PowerSync.Infrastructure.Persistence.MySQL
 
         /// <summary>
         /// Extracts a string value from a dictionary, handling JsonElement values.
+        /// Treats null values as if the key doesn't exist.
         /// </summary>
         private static string? GetStringValue(Dictionary<string, object>? data, string key)
         {
             if (data == null || !data.TryGetValue(key, out var value))
                 return null;
+            
+            // Treat null values (including JsonElement with Null kind) as missing
+            if (value == null)
+                return null;
+            
+            if (value is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Null)
+                return null;
+            
             return ConvertToNativeType(value)?.ToString();
         }
 
@@ -323,6 +332,9 @@ namespace PowerSync.Infrastructure.Persistence.MySQL
 
                 var result = await selectCmd.ExecuteScalarAsync();
                 await transaction.CommitAsync();
+
+                if (result == null || result == DBNull.Value)
+                    throw new InvalidOperationException("Failed to retrieve checkpoint: SELECT query returned null");
 
                 return Convert.ToInt64(result);
             }

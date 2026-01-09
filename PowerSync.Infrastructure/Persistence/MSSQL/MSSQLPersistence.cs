@@ -151,6 +151,7 @@ namespace PowerSync.Infrastructure.Persistence.MSSQL
 
         /// <summary>
         /// Extracts a string value from a dictionary, handling JsonElement values.
+        /// Treats null values as if the key doesn't exist.
         /// </summary>
         /// <param name="data">The dictionary to extract from</param>
         /// <param name="key">The key to look up</param>
@@ -159,6 +160,14 @@ namespace PowerSync.Infrastructure.Persistence.MSSQL
         {
             if (data == null || !data.TryGetValue(key, out var value))
                 return null;
+            
+            // Treat null values (including JsonElement with Null kind) as missing
+            if (value == null)
+                return null;
+            
+            if (value is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Null)
+                return null;
+            
             return ConvertToNativeType(value)?.ToString();
         }
 
@@ -367,6 +376,9 @@ namespace PowerSync.Infrastructure.Persistence.MSSQL
 
                 var result = await cmd.ExecuteScalarAsync();
                 await transaction.CommitAsync();
+
+                if (result == null || result == DBNull.Value)
+                    throw new InvalidOperationException("Failed to retrieve checkpoint: MERGE OUTPUT returned null");
 
                 return Convert.ToInt64(result);
             }
