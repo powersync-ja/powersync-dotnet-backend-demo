@@ -254,9 +254,14 @@ namespace PowerSync.Infrastructure.Persistence.MSSQL
                 .Select(k => $"{EscapeIdentifier(k)} = source.{EscapeIdentifier(k)}")
                 .ToList();
 
-            var updateClause = updateClauses.Count > 0 
-                ? $"WHEN MATCHED THEN UPDATE SET {string.Join(", ", updateClauses)}" 
-                : string.Empty;
+            // For PUT operations, always include WHEN MATCHED clause
+            // If no fields to update, update id to itself (no-op) to ensure the clause exists
+            if (updateClauses.Count == 0)
+            {
+                updateClauses.Add("[id] = source.[id]");
+            }
+
+            var updateClause = $"WHEN MATCHED THEN UPDATE SET {string.Join(", ", updateClauses)}";
 
             var statement = $@"
                 MERGE INTO {table} AS t

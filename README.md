@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains a demo .NET 9 backend API that provides authentication and data synchronization endpoints for a [PowerSync](https://www.powersync.com/) enabled application. It allows client devices to sync data with a PostgreSQL or SQL Server (MSSQL) database.
+This repository contains a demo .NET 9 backend API that provides authentication and data synchronization endpoints for a [PowerSync](https://www.powersync.com/) enabled application. It allows client devices to sync data with PostgreSQL, SQL Server (MSSQL), MySQL, or MongoDB databases.
 
 ### Endpoints
 
@@ -27,7 +27,7 @@ This repository contains a demo .NET 9 backend API that provides authentication 
 ## Requirements
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
-- PostgreSQL or SQL Server (MSSQL)
+- PostgreSQL, SQL Server (MSSQL), MySQL, or MongoDB database
 - PowerSync credentials
 
 ## Environment Variables
@@ -36,7 +36,7 @@ The application requires the following environment variables:
 
 ```
 DATABASE_URI=<your_database_connection_string>
-DATABASE_TYPE=<postgresql|mssql>
+DATABASE_TYPE=<postgresql|mssql|mysql|mongodb>
 POWERSYNC_PRIVATE_KEY=<your_private_key>
 POWERSYNC_PUBLIC_KEY=<your_public_key>
 POWERSYNC_URL=<your_powersync_url>
