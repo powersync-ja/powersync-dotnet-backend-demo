@@ -1,4 +1,7 @@
 using PowerSync.Domain.Interfaces;
+using PowerSync.Infrastructure.Persistence.MongoDB;
+using PowerSync.Infrastructure.Persistence.MSSQL;
+using PowerSync.Infrastructure.Persistence.MySQL;
 using PowerSync.Infrastructure.Persistence.Postgres;
 
 namespace PowerSync.Infrastructure.Persistence
@@ -16,19 +19,23 @@ namespace PowerSync.Infrastructure.Persistence
             {
                 { "mongodb", new MongoPersisterFactory() },
                 { "postgres", new PostgresPersisterFactory() },
-                { "mysql", new MySqlPersisterFactory() }
+                { "postgresql", new PostgresPersisterFactory() },
+                { "mysql", new MySQLPersisterFactory() },
+                { "mssql", new MSSQLPersisterFactory() },
+                { "sqlserver", new MSSQLPersisterFactory() }
             };
         }
 
         /// <summary>
         /// Gets a persister factory for a specific database type.
         /// </summary>
-        /// <param name="type">The database type</param>
+        /// <param name="type">The database type (case-insensitive)</param>
         /// <returns>The corresponding persister factory</returns>
         /// <exception cref="ArgumentException">Thrown when an unsupported database type is provided</exception>
         public IPersisterFactory GetFactory(string type)
         {
-            if (_factories.TryGetValue(type, out var factory))
+            var normalizedType = type.ToLowerInvariant();
+            if (_factories.TryGetValue(normalizedType, out var factory))
             {
                 return factory;
             }
@@ -39,30 +46,21 @@ namespace PowerSync.Infrastructure.Persistence
 
     public class MongoPersisterFactory : IPersisterFactory
     {
-        public IPersister CreatePersisterAsync(string uri)
-        {
-            // Implement MongoDB persister creation
-            throw new NotImplementedException();
-        }
+        public IPersister CreatePersisterAsync(string uri) => new MongoDBPersistence(uri);
     }
 
     public class PostgresPersisterFactory : IPersisterFactory
     {
-        public IPersister CreatePersisterAsync(string uri)
-        {
-            var persister = new PostgresPersister(uri);
-
-            // Return the created persister
-            return persister;
-        }
+        public IPersister CreatePersisterAsync(string uri) => new PostgresPersister(uri);
     }
 
-    public class MySqlPersisterFactory : IPersisterFactory
+    public class MySQLPersisterFactory : IPersisterFactory
     {
-        public IPersister CreatePersisterAsync(string uri)
-        {
-            // Implement MySQL persister creation
-            throw new NotImplementedException();
-        }
+        public IPersister CreatePersisterAsync(string uri) => new MySQLPersistence(uri);
+    }
+
+    public class MSSQLPersisterFactory : IPersisterFactory
+    {
+        public IPersister CreatePersisterAsync(string uri) => new MSSQLPersistence(uri);
     }
 }
